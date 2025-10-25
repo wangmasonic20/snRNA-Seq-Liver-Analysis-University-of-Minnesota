@@ -1,1 +1,75 @@
+# -------------------------------------------------------------
+# Hepatocyte Subclustering and Zonation Analysis
+# -------------------------------------------------------------
+# Required packages
+library(Seurat)
+library(tidyverse)
+library(harmony)
+
+set.seed(2702)
+
+# -------------------------------------------------------------
+# 1. Subset hepatocytes
+# -------------------------------------------------------------
+Hepatocytes.1 <- data %>%
+  subset(celltype %in% "Hepatocytes") %>%
+  { .$@active.assay <- "integrated"; . } # set active assay inline
+
+# -------------------------------------------------------------
+# 2. Data scaling and dimensional reduction
+# -------------------------------------------------------------
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  ScaleData() %>%
+  RunPCA()
+
+# -------------------------------------------------------------
+# 3. Batch correction using Harmony
+# -------------------------------------------------------------
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  RunHarmony("orig.ident")
+
+# -------------------------------------------------------------
+# 4. Clustering and visualization
+# -------------------------------------------------------------
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  FindNeighbors(dims = 1:15, reduction = "harmony") %>%
+  FindClusters(resolution = 0.6) %>%
+  RunTSNE(reduction = "harmony", dims = 1:15)
+
+# -------------------------------------------------------------
+# 5. Define and assign hepatocyte zonation identities
+# -------------------------------------------------------------
+celltype <- tibble(
+  cluster = levels(Hepatocytes.1),
+  zone = c(
+    "Periportal Hep", "Midlobular Hep", "Periportal Hep",
+    "Pericentral Hep", "Pericentral Hep",
+    "No-Zone Hep", "No-Zone Hep", "No-Zone Hep", "Periportal Hep"
+  )
+)
+
+# Rename cluster identities using tidyverse mapping
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  RenameIdents(set_names(celltype$zone, celltype$cluster))
+
+# -------------------------------------------------------------
+# 6. Set active assay for downstream RNA-level analysis
+# -------------------------------------------------------------
+Hepatocytes.1@active.assay <- "RNA"
+
+# -------------------------------------------------------------
+# 7. Quick overview of cell-type distribution
+# -------------------------------------------------------------
+Hepatocytes.1@meta.data %>%
+  count(orig.ident, ident = Idents(Hepatocytes.1)) %>%
+  ggplot(aes(x = ident, y = n, fill = orig.ident)) +
+  geom_col() +
+  theme_minimal() +
+  labs(
+    title = "Hepatocyte Zonation Distribution Across Samples",
+    x = "Zonation Identity",
+    y = "Cell Count",
+    fill = "Sample ID"
+  )
+
 
