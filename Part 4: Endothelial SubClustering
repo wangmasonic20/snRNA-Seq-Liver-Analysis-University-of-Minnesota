@@ -1,1 +1,17 @@
+Endothelial = subset(data, celltype == "Liver-Sinusoidal Endothelial Cells")
+Endothelial@active.assay <- "integrated"
+Endothelial <- ScaleData(Endothelial)
+Endothelial <- RunPCA(Endothelial)
+Endothelial <- RunHarmony(Endothelial, "orig.ident")
+Endothelial <- FindNeighbors(Endothelial, dims = 1:15, reduction = "harmony")
+Endothelial <- FindClusters(Endothelial, resolution = 0.4)
+Endothelial <- RunTSNE(Endothelial, reduction = "harmony", dims = 1:15)
+DimPlot(Endothelial, reduction = "tsne", label = T)
+
+
+celltype = c("Periportal", "Periportal", "Pericentral", "Pericentral", "Periportal", "Periportal", "Pericentral", "Periportal", "Periportal")
+names(celltype) <- levels(Endothelial)
+Endothelial <- RenameIdents(Endothelial, celltype)
+Endothelial@active.assay = "RNA"
+DimPlot(Endothelial, reduction = "tsne", label = T, split.by = "type")
 
