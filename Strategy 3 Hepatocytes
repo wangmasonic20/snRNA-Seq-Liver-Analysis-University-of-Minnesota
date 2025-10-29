@@ -1,0 +1,170 @@
+###############################################################
+# Hepatocyte Senescence Analysis in 2-Year-Old WT Mouse Liver
+# -------------------------------------------------------------
+# Goal:
+# Integrate, normalize, and analyze hepatocytes from 2-year-old WT
+# and 8-week mouse liver samples, focusing on senescent subpopulations.
+#
+# Steps:
+#   1. Load data & libraries
+#   2. Compute SenMayo senescence score
+#   3. Subset senescent cells
+#   4. Assign senotypes (young/old; senescent/non-senescent)
+#   5. Perform zone-specific differential expression analysis
+#   6. Visualize with clustered dot plots
+#   7. Identify commonly upregulated genes
+###############################################################
+
+# -----------------------------
+# 1. Load Required Libraries
+# -----------------------------
+library(Seurat)
+library(tidyverse)
+library(harmony)
+library(UCell)
+set.seed(2702)
+
+# -----------------------------
+# 2. Define SenMayo Gene Set
+# -----------------------------
+genes <- c(
+  "Acvr1b","Ang","Angpt1","Angptl4","Areg","Axl","Bex3","Bmp2","Bmp6","C3",
+  "Ccl1","Ccl13","Ccl16","Ccl2","Ccl20","Ccl24","Ccl26","Ccl3","Ccl3l1","Ccl4",
+  "Ccl5","Ccl7","Ccl8","Cd55","Cd9","Csf1","Csf2","Csf2rb","Cst4","Ctnnb1",
+  "Ctsb","Cxcl1","Cxcl10","Cxcl12","Cxcl16","Cxcl2","Cxcl3","Cxcl8","Cxcr2",
+  "Dkk1","Edn1","Egf","Egfr","Ereg","Esm1","Ets2","Fas","Fgf1","Fgf2","Fgf7",
+  "Gdf15","Gem","Gmfg","Hgf","Hmgb1","Icam1","Icam3","Igf1","Igfbp1","Igfbp2",
+  "Igfbp3","Igfbp4","Igfbp5","Igfbp6","Igfbp7","Il10","Il13","Il15","Il18",
+  "Il1a","Il1b","Il2","Il32","Il6","Il6st","Il7","Inha","Iqgap2","Itga2",
+  "Itpka","Jun","Kitlg","Lcp1","Mif","Mmp1","Mmp10","Mmp12","Mmp13","Mmp14",
+  "Mmp2","Mmp3","Mmp9","Nap1l4","Nrg1","Pappa","Pecam1","Pgf","Pigf","Plat",
+  "Plau","Plaur","Ptbp1","Ptger2","Ptges","Rps6ka5","Scamp4","Selplg","Sema3f",
+  "Serpinb4","Serpine1","Serpine2","Spp1","Spx","Timp2","Tnf","Tnfrsf10c",
+  "Tnfrsf11b","Tnfrsf1a","Tnfrsf1b","Tubgcp2","Vegfa","Vegfc","Vgf","Wnt16","Wnt2"
+)
+
+# -----------------------------
+# 3. Calculate SenMayo UCell Score
+# -----------------------------
+data <- AddModuleScore_UCell(data, assay = "RNA", features = list(SenMayo = genes))
+senescence_threshold <- quantile(data$sen_mayo_UCell, probs = 0.90)[[1]]
+
+# Subset top 10% senescent cells
+data.1 <- subset(data, sen_mayo_UCell >= senescence_threshold)
+
+# Subset by sample type
+data_2_Years <- subset(data.1, type == "2_Years_Wt")
+data_8_Weeks <- subset(data.1, type == "8_Weeks")
+
+# -----------------------------
+# 4. Assign Senotypes
+# -----------------------------
+Hepatocytes.1$senotype <- "n"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "2_Years_Wt", "senotype"] <- "Old_NonSenotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "8_Weeks", "senotype"] <- "Young_NonSenotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$cells %in% colnames(data_2_Years), "senotype"] <- "Old_Senotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$cells %in% colnames(data_8_Weeks), "senotype"] <- "Young_Senotype"
+
+write.csv(
+  table(Hepatocytes.1@active.ident, Hepatocytes.1$senotype),
+  "Senotype_Numbers_Strategy3_SenMayo.csv"
+)
+
+# Add celltype annotation
+Hepatocytes.1$celltype <- as.factor(Hepatocytes.1@active.ident)
+
+# Visualize senescent cells on UMAP
+pdf("Hepatocytes_Senotype_UMAP_Strategy_3_SenMayo.pdf", height = 5, width = 12)
+DimPlot(
+  Hepatocytes.1,
+  cells.highlight = c(colnames(data_2_Years), colnames(data_8_Weeks)),
+  reduction = "tsne",
+  split.by = "type",
+  raster = FALSE
+)
+dev.off()
+
+# -----------------------------
+# 5. Helper Function for Zone Analysis
+# -----------------------------
+analyze_zone <- function(seurat_obj, zone_name) {
+  message("Analyzing ", zone_name, " hepatocytes...")
+  
+  zone <- subset(seurat_obj, celltype == zone_name)
+  zone@active.ident <- as.factor(zone$senotype)
+  zone@active.assay <- "RNA"
+  
+  # --- Old ---
+  mk_old <- run_find_markers_subsample(zone, "Old_Senotype", "Old_NonSenotype", n_iterations = 100)
+  mk_old <- combine_results(mk_old)
+  
+  mk_up_old <- mk_old %>% filter(mean_log2FC > 0, p_val_adj < 0.05) %>% slice_head(n = 30) %>% pull(gene)
+  mk_down_old <- mk_old %>% filter(mean_log2FC < 0, p_val_adj < 0.05) %>% slice_head(n = 30) %>% pull(gene)
+  
+  # --- Young ---
+  mk_young <- run_find_markers_subsample(zone, "Young_Senotype", "Young_NonSenotype", n_iterations = 100)
+  mk_young <- combine_results(mk_young)
+  
+  mk_up_young <- mk_young %>% filter(mean_log2FC > 0, p_val_adj < 0.05) %>% slice_head(n = 30) %>% pull(gene)
+  mk_down_young <- mk_young %>% filter(mean_log2FC < 0, p_val_adj < 0.05) %>% slice_head(n = 30) %>% pull(gene)
+  
+  list(
+    zone = zone,
+    up_old = mk_up_old, down_old = mk_down_old,
+    up_young = mk_up_young, down_young = mk_down_young
+  )
+}
+
+# -----------------------------
+# 6. Run Zone-Specific Analyses
+# -----------------------------
+No_Zone      <- analyze_zone(Hepatocytes.1, "No-Zone Hep")
+Midlobular   <- analyze_zone(Hepatocytes.1, "Midlobular Hep")
+Pericentral  <- analyze_zone(Hepatocytes.1, "Pericentral Hep")
+Periportal   <- analyze_zone(Hepatocytes.1, "Periportal Hep")
+
+# -----------------------------
+# 7. Generate Clustered Dot Plots
+# -----------------------------
+plot_clustered_dotplot <- function(zone, features, filename) {
+  pdf(filename, height = 8, width = 6)
+  Clustered_DotPlot(zone, features = features, assay = "RNA", cluster_ident = FALSE, cluster_feature = TRUE, k = 4)
+  dev.off()
+}
+
+# --- Old ---
+plot_clustered_dotplot(No_Zone$zone,     No_Zone$up_old,     "No_Zone_Clustered_DotPlot_SenMayo.pdf")
+plot_clustered_dotplot(Midlobular$zone,  Midlobular$up_old,  "Midlobular_Clustered_DotPlot_SenMayo.pdf")
+plot_clustered_dotplot(Pericentral$zone, Pericentral$up_old, "Pericentral_Clustered_DotPlot_SenMayo.pdf")
+plot_clustered_dotplot(Periportal$zone,  Periportal$up_old,  "Periportal_Clustered_DotPlot_SenMayo.pdf")
+
+# --- Young ---
+plot_clustered_dotplot(No_Zone$zone,     No_Zone$up_young,     "No_Zone_Clustered_DotPlot_SenMayo_Young.pdf")
+plot_clustered_dotplot(Midlobular$zone,  Midlobular$up_young,  "Midlobular_Clustered_DotPlot_SenMayo_Young.pdf")
+plot_clustered_dotplot(Pericentral$zone, Pericentral$up_young, "Pericentral_Clustered_DotPlot_SenMayo_Young.pdf")
+plot_clustered_dotplot(Periportal$zone,  Periportal$down_young,"Periportal_Clustered_DotPlot_SenMayo_Young.pdf")
+
+# -----------------------------
+# 8. Identify Common Genes Across Zones
+# -----------------------------
+common_old <- Reduce(intersect, list(
+  Periportal$up_old,
+  Pericentral$up_old,
+  Midlobular$up_old,
+  No_Zone$up_old
+))
+
+common_young <- Reduce(intersect, list(
+  Periportal$up_young,
+  Pericentral$up_young,
+  Midlobular$up_young,
+  No_Zone$up_young
+))
+
+write_lines(common_old, "Common_Genes_SenMayo_Old.txt")
+write_lines(common_young, "Common_Genes_SenMayo_Young.txt")
+
+###############################################################
+# End of Script
+###############################################################
+
