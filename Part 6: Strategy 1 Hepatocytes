@@ -1,0 +1,245 @@
+# -------------------------------------------------------------
+# 🧬 2-Year Wild-Type (WT) Hepatocyte Integration & Analysis
+# -------------------------------------------------------------
+# Goal:
+# Integrate and analyze hepatocytes from 2-year-old WT mouse liver samples.
+# Steps include: subsetting, normalization, variable feature selection,
+# batch correction with Harmony, clustering, and visualization.
+# -------------------------------------------------------------
+
+# Load required libraries
+library(Seurat)
+library(tidyverse)
+library(harmony)
+set.seed(2702)
+# -------------------------------------------------------------
+# 1. Subset hepatocytes from 2-Year WT samples
+# -------------------------------------------------------------
+hepatocytes_2yr_wt <- Hepatocytes.1 %>% subset(type == "2_Years_Wt")
+
+# Split Seurat object by sample identity for integration
+hepatocytes_2yr_wt_list <- hepatocytes_2yr_wt %>% SplitObject(split.by = "orig.ident")
+
+# -------------------------------------------------------------
+# 2. Define gene sets to guide integration
+# -------------------------------------------------------------
+integration_genes <- c(genes_category1, genes_category2, genes_category3)
+
+# -------------------------------------------------------------
+# 3. Normalize data and define variable features per sample
+# -------------------------------------------------------------
+hepatocytes_2yr_wt_list <- map(hepatocytes_2yr_wt_list, function(sample_obj) {
+  sample_obj %>%
+    NormalizeData() %>%
+    FindVariableFeatures(selection.method = "vst", nfeatures = length(integration_genes)) %>%
+    { VariableFeatures(.) <- integration_genes; . } # Restrict to gene list
+})
+
+# -------------------------------------------------------------
+# 4. Identify common genes and compute integration anchors
+# -------------------------------------------------------------
+common_genes <- hepatocytes_2yr_wt_list %>%
+  map(VariableFeatures) %>%
+  reduce(intersect)
+
+integration_anchors <- FindIntegrationAnchors(
+  object.list = hepatocytes_2yr_wt_list,
+  anchor.features = common_genes,
+  reference = 1
+)
+
+# Integrate data across all 2-Year WT hepatocyte samples
+hepatocytes_2yr_wt_integrated <- IntegrateData(anchorset = integration_anchors)
+
+# -------------------------------------------------------------
+# 5. Dimensionality reduction, batch correction, and clustering
+# -------------------------------------------------------------
+hepatocytes_2yr_wt_integrated <- hepatocytes_2yr_wt_integrated %>%
+  { DefaultAssay(.) <- "integrated"; . } %>%
+  ScaleData() %>%
+  RunPCA() %>%
+  RunHarmony(group.by.vars = "orig.ident") %>%
+  FindNeighbors(dims = 1:15, reduction = "harmony") %>%
+  FindClusters(resolution = 0.6) %>%
+  RunUMAP(reduction = "harmony", dims = 1:15)
+
+# -------------------------------------------------------------
+# 6. Visualization
+# -------------------------------------------------------------
+
+# -------------------------------------------------------------
+# ✅ Optional: cluster summary
+# -------------------------------------------------------------
+hepatocytes_2yr_wt_integrated@meta.data %>%
+  count(orig.ident, cluster = Idents(hepatocytes_2yr_wt_integrated)) %>%
+  ggplot(aes(x = cluster, y = n, fill = orig.ident)) +
+  geom_col() +
+  theme_minimal() +
+  labs(
+    title = "Cluster Composition — 2-Year WT Hepatocytes",
+    x = "Cluster ID",
+    y = "Cell Count",
+    fill = "Sample ID"
+  )
+
+pdf("Hepatocytes.integrated.pdf", height = 5, width = 7)
+DimPlot(hepatocytes_2yr_wt_integrated, label = T)
+dev.off()
+
+### Cell Numbers
+write.csv(table(hepatocytes_2yr_wt_integrated@active.ident, hepatocytes_2yr_wt_integrated$orig.ident), "Cell Numbers For Clusters in 2 Years Integrated.csv")
+
+###
+Senotype_Clusters_2_Years = subset(hepatocytes_2yr_wt_integrated, idents = c(7,6,9))
+
+#### Young 
+
+Hepatocytes.young = subset(Hepatocytes.1, type == "8_Weeks")
+Hepatocytes.young = SplitObject(Hepatocytes.young, split.by = "orig.ident")
+genes = c(genes_category1, genes_category2, genes_category3)
+for (i in 1:length(Hepatocytes.young)) {
+  Hepatocytes.young[[i]] <- NormalizeData(Hepatocytes.young[[i]])
+  Hepatocytes.young[[i]] <- FindVariableFeatures(Hepatocytes.young[[i]], selection.method = "vst",
+                                                 nfeatures = length(genes))
+  # Optionally restrict variable features to your genes
+  VariableFeatures(Hepatocytes.young[[i]]) <- genes
+}
+common_genes <- Reduce(intersect, lapply(Hepatocytes.young, VariableFeatures))
+anchors <- FindIntegrationAnchors(object.list = Hepatocytes.young, anchor.features = common_genes, reference = 1)
+Hepatocytes.integrated_young <- IntegrateData(anchorset = anchors)
+DefaultAssay(Hepatocytes.integrated_young) <- "integrated"
+Hepatocytes.integrated_young <- ScaleData(Hepatocytes.integrated_young)
+Hepatocytes.integrated_young <- RunPCA(Hepatocytes.integrated_young)
+Hepatocytes.integrated_young <- RunHarmony(Hepatocytes.integrated_young, "orig.ident")
+Hepatocytes.integrated_young <- FindNeighbors(Hepatocytes.integrated_young, dims = 1:15, reduction = "harmony")
+Hepatocytes.integrated_young <- FindClusters(Hepatocytes.integrated_young, resolution = 0.6)
+Hepatocytes.integrated_young  = RunUMAP(Hepatocytes.integrated_young, reduction = "harmony", dims = 1:15)
+Senotype_Clusters_8_Weeks = subset(Hepatocytes.integrated_young, idents = c(7,6))
+
+pdf("Hepatocytes.integrated_young.pdf", height = 5, width = 7)
+DimPlot(Hepatocytes.integrated_young, label = T)
+dev.off()
+
+### Cell Numbers
+write.csv(table(Hepatocytes.integrated_young@active.ident, Hepatocytes.integrated_young$orig.ident), "Cell Numbers For Clusters in 8 Weeks Integrated.csv")
+
+
+# Subset by sample type
+data_2_Years <- Senotype_Clusters_2_Years
+data_8_Weeks <- Senotype_Clusters_8_Weeks
+
+# -----------------------------
+# 4. Assign Senotypes
+# -----------------------------
+Hepatocytes.1$senotype <- "n"
+
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "2_Years_Wt", "senotype"] <- "Old_NonSenotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "8_Weeks", "senotype"] <- "Young_NonSenotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$cells %in% colnames(data_2_Years), "senotype"] <- "Old_Senotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$cells %in% colnames(data_8_Weeks), "senotype"] <- "Young_Senotype"
+
+write.csv(
+  table(Hepatocytes.1@active.ident, Hepatocytes.1$senotype),
+  "Senotype_Numbers_Strategy1_Clustering.csv"
+)
+
+# Add celltype annotation
+Hepatocytes.1$celltype <- as.factor(Hepatocytes.1@active.ident)
+
+# Visualize senescent cells on UMAP
+pdf("Hepatocytes_Senotype_UMAP_Strategy_1_Clustering.pdf", height = 5, width = 12)
+DimPlot(
+  Hepatocytes.1,
+  cells.highlight = c(colnames(data_2_Years), colnames(data_8_Weeks)),
+  reduction = "tsne",
+  split.by = "type",
+  raster = FALSE
+)
+dev.off()
+
+# -----------------------------
+# 5. Helper Function for Zone Analysis
+# -----------------------------
+analyze_zone <- function(seurat_obj, zone_name) {
+  message("Analyzing ", zone_name, " hepatocytes...")
+  
+  zone <- subset(seurat_obj, celltype == zone_name)
+  zone@active.ident <- as.factor(zone$senotype)
+  zone@active.assay <- "RNA"
+  
+  # --- Old ---
+  mk_old <- run_find_markers_subsample(zone, "Old_Senotype", "Old_NonSenotype", n_iterations = 100)
+  mk_old <- combine_results(mk_old)
+  
+  mk_up_old <- mk_old %>% filter(mean_log2FC > 0, p_val_adj < 0.05) %>% slice_head(n = 30) %>% pull(gene)
+  mk_down_old <- mk_old %>% filter(mean_log2FC < 0, p_val_adj < 0.05) %>% slice_head(n = 30) %>% pull(gene)
+  
+  # --- Young ---
+  mk_young <- run_find_markers_subsample(zone, "Young_Senotype", "Young_NonSenotype", n_iterations = 100)
+  mk_young <- combine_results(mk_young)
+  
+  mk_up_young <- mk_young %>% filter(mean_log2FC > 0, p_val_adj < 0.05) %>% slice_head(n = 30) %>% pull(gene)
+  mk_down_young <- mk_young %>% filter(mean_log2FC < 0, p_val_adj < 0.05) %>% slice_head(n = 30) %>% pull(gene)
+  
+  list(
+    zone = zone,
+    up_old = mk_up_old, down_old = mk_down_old,
+    up_young = mk_up_young, down_young = mk_down_young
+  )
+}
+
+# -----------------------------
+# 6. Run Zone-Specific Analyses
+# -----------------------------
+No_Zone      <- analyze_zone(Hepatocytes.1, "No-Zone Hep")
+Midlobular   <- analyze_zone(Hepatocytes.1, "Midlobular Hep")
+Pericentral  <- analyze_zone(Hepatocytes.1, "Pericentral Hep")
+Periportal   <- analyze_zone(Hepatocytes.1, "Periportal Hep")
+
+
+
+# -----------------------------
+# 7. Generate Clustered Dot Plots
+# -----------------------------
+plot_clustered_dotplot <- function(zone, features, filename) {
+  pdf(filename, height = 8, width = 6)
+  Clustered_DotPlot(zone, features = features, assay = "RNA", cluster_ident = FALSE, cluster_feature = TRUE, k = 4)
+  dev.off()
+}
+
+# --- Old ---
+plot_clustered_dotplot(No_Zone$zone,     No_Zone$up_old,     "No_Zone_Clustered_DotPlot_SenMayo.pdf")
+plot_clustered_dotplot(Midlobular$zone,  Midlobular$up_old,  "Midlobular_Clustered_DotPlot_SenMayo.pdf")
+plot_clustered_dotplot(Pericentral$zone, Pericentral$up_old, "Pericentral_Clustered_DotPlot_SenMayo.pdf")
+plot_clustered_dotplot(Periportal$zone,  Periportal$up_old,  "Periportal_Clustered_DotPlot_SenMayo.pdf")
+
+# --- Young ---
+plot_clustered_dotplot(No_Zone$zone,     No_Zone$up_young,     "No_Zone_Clustered_DotPlot_SenMayo_Young.pdf")
+plot_clustered_dotplot(Midlobular$zone,  Midlobular$up_young,  "Midlobular_Clustered_DotPlot_SenMayo_Young.pdf")
+plot_clustered_dotplot(Pericentral$zone, Pericentral$up_young, "Pericentral_Clustered_DotPlot_SenMayo_Young.pdf")
+plot_clustered_dotplot(Periportal$zone,  Periportal$down_young,"Periportal_Clustered_DotPlot_SenMayo_Young.pdf")
+
+# -----------------------------
+# 8. Identify Common Genes Across Zones
+# -----------------------------
+common_old <- Reduce(intersect, list(
+  Periportal$up_old,
+  Pericentral$up_old,
+  Midlobular$up_old,
+  No_Zone$up_old
+))
+
+common_young <- Reduce(intersect, list(
+  Periportal$up_young,
+  Pericentral$up_young,
+  Midlobular$up_young,
+  No_Zone$up_young
+))
+
+write_lines(common_old, "Common_Genes_SenMayo_Old.txt")
+write_lines(common_young, "Common_Genes_SenMayo_Young.txt")
+
+###############################################################
+# End of Script
+###############################################################
+
