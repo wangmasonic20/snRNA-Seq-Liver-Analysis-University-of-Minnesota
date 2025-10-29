@@ -1,0 +1,43 @@
+# -------------------------------------------------------------
+# 🧬 2-Year Wild-Type (WT) Hepatocyte Integration & Analysis
+# -------------------------------------------------------------
+# Goal:
+# Integrate and analyze hepatocytes from 2-year-old WT mouse liver samples.
+# Steps include: subsetting, normalization, variable feature selection,
+# batch correction with Harmony, clustering, and visualization.
+# -------------------------------------------------------------
+
+# Load required libraries
+library(Seurat)
+library(tidyverse)
+library(harmony)
+library(UCell)
+
+set.seed(2702)
+
+data = AddModuleScore_UCell(data, assay = "RNA", features = list(genes_category1 = genes_category1, genes_category2 = genes_category2 , genes_category3 = genes_category3))
+quantile(data$genes_category1_UCell, probs = 0.90)[[1]]
+
+data.1 = subset(data, genes_category1_UCell >= quantile(data$genes_category1_UCell, probs = 0.90)[[1]] & genes_category2_UCell > 0 & genes_category3_UCell > 0)
+data_2_Years = subset(data.1, type == "2_Years_Wt")
+data_8_Weeks = subset(data.1, type == "8_Weeks")
+
+
+#### Senotype Analysis
+
+Hepatocytes.1$senotype = "n"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "2_Years_Wt",]$senotype = "Old_NonSenotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "8_Weeks",]$senotype = "Young_NonSenotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$cells %in% colnames(data_2_Years),]$senotype = "Old_Senotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$cells %in% colnames(data_8_Weeks),]$senotype = "Young_Senotype"
+
+write.csv(table(Hepatocytes.1@active.ident, Hepatocytes.1$senotype), "Senotype_Numbers_Strategy2.csv")
+
+### Celltype Set
+
+Hepatocytes.1$celltype = as.factor(Hepatocytes.1@active.ident)
+
+
+pdf("Hepatocytes_Senotype_UMAP_Strategy_2.pdf", height = 5, width = 12)
+DimPlot(Hepatocytes.1, cells.highlight = c(colnames(data_2_Years), colnames(data_8_Weeks)), reduction = "tsne", split.by = "type", raster = F)
+dev.off()
