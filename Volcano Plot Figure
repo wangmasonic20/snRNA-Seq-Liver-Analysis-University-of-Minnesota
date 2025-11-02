@@ -1,0 +1,203 @@
+# -------------------------------------------------------------
+# 🧬 2-Year Wild-Type (WT) Hepatocyte Integration & Analysis
+# -------------------------------------------------------------
+# Goal:
+# Integrate and analyze hepatocytes from 2-year-old WT mouse liver samples.
+# Steps include: subsetting, normalization, variable feature selection,
+# batch correction with Harmony, clustering, and visualization.
+# -------------------------------------------------------------
+
+# Load required libraries
+library(Seurat)
+library(tidyverse)
+library(harmony)
+set.seed(2702)
+# -------------------------------------------------------------
+# 1. Subset hepatocytes from 2-Year WT samples
+# -------------------------------------------------------------
+hepatocytes_2yr_wt <- Hepatocytes.1 %>% subset(type == "2_Years_Wt")
+
+# Split Seurat object by sample identity for integration
+hepatocytes_2yr_wt_list <- hepatocytes_2yr_wt %>% SplitObject(split.by = "orig.ident")
+
+# -------------------------------------------------------------
+# 2. Define gene sets to guide integration
+# -------------------------------------------------------------
+integration_genes <- c(genes_category1, genes_category2, genes_category3)
+
+# -------------------------------------------------------------
+# 3. Normalize data and define variable features per sample
+# -------------------------------------------------------------
+hepatocytes_2yr_wt_list <- map(hepatocytes_2yr_wt_list, function(sample_obj) {
+  sample_obj %>%
+    NormalizeData() %>%
+    FindVariableFeatures(selection.method = "vst", nfeatures = length(integration_genes)) %>%
+    { VariableFeatures(.) <- integration_genes; . } # Restrict to gene list
+})
+
+# -------------------------------------------------------------
+# 4. Identify common genes and compute integration anchors
+# -------------------------------------------------------------
+common_genes <- hepatocytes_2yr_wt_list %>%
+  map(VariableFeatures) %>%
+  reduce(intersect)
+
+integration_anchors <- FindIntegrationAnchors(
+  object.list = hepatocytes_2yr_wt_list,
+  anchor.features = common_genes,
+  reference = 1
+)
+
+# Integrate data across all 2-Year WT hepatocyte samples
+hepatocytes_2yr_wt_integrated <- IntegrateData(anchorset = integration_anchors)
+
+# -------------------------------------------------------------
+# 5. Dimensionality reduction, batch correction, and clustering
+# -------------------------------------------------------------
+hepatocytes_2yr_wt_integrated <- hepatocytes_2yr_wt_integrated %>%
+  { DefaultAssay(.) <- "integrated"; . } %>%
+  ScaleData() %>%
+  RunPCA() %>%
+  RunHarmony(group.by.vars = "orig.ident") %>%
+  FindNeighbors(dims = 1:15, reduction = "harmony") %>%
+  FindClusters(resolution = 0.6) %>%
+  RunUMAP(reduction = "harmony", dims = 1:15)
+
+# -------------------------------------------------------------
+# 6. Visualization
+# -------------------------------------------------------------
+
+# -------------------------------------------------------------
+# ✅ Optional: cluster summary
+# -------------------------------------------------------------
+hepatocytes_2yr_wt_integrated@meta.data %>%
+  count(orig.ident, cluster = Idents(hepatocytes_2yr_wt_integrated)) %>%
+  ggplot(aes(x = cluster, y = n, fill = orig.ident)) +
+  geom_col() +
+  theme_minimal() +
+  labs(
+    title = "Cluster Composition — 2-Year WT Hepatocytes",
+    x = "Cluster ID",
+    y = "Cell Count",
+    fill = "Sample ID"
+  )
+
+pdf("Hepatocytes.integrated.pdf", height = 5, width = 7)
+DimPlot(hepatocytes_2yr_wt_integrated, label = T)
+dev.off()
+
+### Cell Numbers
+write.csv(table(hepatocytes_2yr_wt_integrated@active.ident, hepatocytes_2yr_wt_integrated$orig.ident), "Cell Numbers For Clusters in 2 Years Integrated.csv")
+
+###
+Senotype_Clusters_2_Years = subset(hepatocytes_2yr_wt_integrated, idents = c(7,6,9))
+
+#### Young 
+
+Hepatocytes.young = subset(Hepatocytes.1, type == "8_Weeks")
+Hepatocytes.young = SplitObject(Hepatocytes.young, split.by = "orig.ident")
+genes = c(genes_category1, genes_category2, genes_category3)
+for (i in 1:length(Hepatocytes.young)) {
+  Hepatocytes.young[[i]] <- NormalizeData(Hepatocytes.young[[i]])
+  Hepatocytes.young[[i]] <- FindVariableFeatures(Hepatocytes.young[[i]], selection.method = "vst",
+                                                 nfeatures = length(genes))
+  # Optionally restrict variable features to your genes
+  VariableFeatures(Hepatocytes.young[[i]]) <- genes
+}
+common_genes <- Reduce(intersect, lapply(Hepatocytes.young, VariableFeatures))
+anchors <- FindIntegrationAnchors(object.list = Hepatocytes.young, anchor.features = common_genes, reference = 1)
+Hepatocytes.integrated_young <- IntegrateData(anchorset = anchors)
+DefaultAssay(Hepatocytes.integrated_young) <- "integrated"
+Hepatocytes.integrated_young <- ScaleData(Hepatocytes.integrated_young)
+Hepatocytes.integrated_young <- RunPCA(Hepatocytes.integrated_young)
+Hepatocytes.integrated_young <- RunHarmony(Hepatocytes.integrated_young, "orig.ident")
+Hepatocytes.integrated_young <- FindNeighbors(Hepatocytes.integrated_young, dims = 1:15, reduction = "harmony")
+Hepatocytes.integrated_young <- FindClusters(Hepatocytes.integrated_young, resolution = 0.6)
+Hepatocytes.integrated_young  = RunUMAP(Hepatocytes.integrated_young, reduction = "harmony", dims = 1:15)
+Senotype_Clusters_8_Weeks = subset(Hepatocytes.integrated_young, idents = c(7,6))
+
+pdf("Hepatocytes.integrated_young.pdf", height = 5, width = 7)
+DimPlot(Hepatocytes.integrated_young, label = T)
+dev.off()
+
+### Cell Numbers
+write.csv(table(Hepatocytes.integrated_young@active.ident, Hepatocytes.integrated_young$orig.ident), "Cell Numbers For Clusters in 8 Weeks Integrated.csv")
+
+
+# Subset by sample type
+data_2_Years <- Senotype_Clusters_2_Years
+data_8_Weeks <- Senotype_Clusters_8_Weeks
+
+# -----------------------------
+# 4. Assign Senotypes
+# -----------------------------
+Hepatocytes.1$senotype <- "n"
+
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "2_Years_Wt", "senotype"] <- "Old_NonSenotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "8_Weeks", "senotype"] <- "Young_NonSenotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$cells %in% colnames(data_2_Years), "senotype"] <- "Old_Senotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$cells %in% colnames(data_8_Weeks), "senotype"] <- "Young_Senotype"
+
+Hepatocytes.1$celltype = as.factor(Hepatocytes.1@active.ident)
+Pericentral_HEP = subset(Hepatocytes.1, celltype == "Pericentral Hep")
+Pericentral_HEP@active.ident = as.factor(Pericentral_HEP$senotype)
+Pericentral_HEP@active.assay
+mk = run_find_markers_subsample(Pericentral_HEP, n_iterations = 100, target_group = "Old_Senotype", comparison_group = "Old_NonSenotype")
+mk = combine_results(mk)
+
+mk$significant = "Not_Significant"
+mk[mk$p_val_adj < 0.05 & mk$mean_log2FC > 0,]$significant = "Up_Regulated"
+mk[mk$p_val_adj < 0.05 & mk$mean_log2FC < 0,]$significant = "Down_Regulated"
+
+View(mk)
+
+
+
+
+genes <- c(
+  "Lgr4", "Lgr5",
+  "Fzd1", "Fzd2", "Fzd3", "Fzd4", "Fzd5", "Fzd6", "Fzd7", "Fzd8", "Fzd9", "Fzd10",
+  "Lrp5", "Lrp6",
+  "Znrf3", "Rnf43",
+  "Ryk",
+  "Wnt1", "Wnt2", "Wnt2b", "Wnt3", "Wnt3a", "Wnt4", "Wnt5a", "Wnt5b",
+  "Wnt6", "Wnt7a", "Wnt7b", "Wnt8a", "Wnt8b",
+  "Wnt9a", "Wnt9b", "Wnt10a", "Wnt10b",
+  "Wnt11", "Wnt16"
+)
+# Specify which genes to label
+genes_to_label <- genes
+
+
+
+
+# Specify which genes to label
+genes_to_label <- genes
+# Subset data for labels
+label_df <- mk[mk$gene %in% genes_to_label, ]
+# Build the volcano plot
+volcano <- ggplot(mk, aes(x = mean_log2FC, y = -log10(p_val_adj))) +
+  geom_point(aes(color = significant), size = 3) +                   # All points
+  scale_color_manual(values = c(Not_Significant = "grey70", Up_Regulated = "salmon3", Down_Regulated = "lightblue3")) +   # Colors
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "blue") +  # p-value cutoff
+  geom_text_repel(
+    data = label_df,
+    aes(label = gene),
+    size = 4,
+    fontface = "bold",
+    max.overlaps = Inf,
+    box.padding = 0.5,
+    segment.color = NA,
+    force_pull = 8,
+    force = 8
+  )
+
+
+
+
+pdf("Hep_pericentral_Old_Senotype_vs_Old_Non_Senotype.pdf", height = 8, width = 14)
+volcano
+dev.off()
+
+
+
