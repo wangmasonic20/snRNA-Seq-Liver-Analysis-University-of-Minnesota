@@ -1,0 +1,122 @@
+C1 = FindMarkers(data, group.by = "type", ident.1 = "2_Years_Wt", ident.2 = "8_Weeks", subset.ident = "Hepatocytes", assay = "RNA")
+C2 = FindMarkers(data, group.by = "type", ident.1 = "2_Years_Wt", ident.2 = "8_Weeks", subset.ident = "Immune Cells", assay = "RNA")
+C3 = FindMarkers(data, group.by = "type", ident.1 = "2_Years_Wt", ident.2 = "8_Weeks", subset.ident = "Liver-Sinusoidal Endothelial Cells", assay = "RNA")
+C4 = FindMarkers(data, group.by = "type", ident.1 = "2_Years_Wt", ident.2 = "8_Weeks", subset.ident = "HSC", assay = "RNA")
+C5 = FindMarkers(data, group.by = "type", ident.1 = "2_Years_Wt", ident.2 = "8_Weeks", subset.ident = "Kupffer Cells", assay = "RNA")
+C6 = FindMarkers(data, group.by = "type", ident.1 = "2_Years_Wt", ident.2 = "8_Weeks", subset.ident = "Cholangiocytes", assay = "RNA")
+
+all_gen = c(genes_category1, genes_category2, genes_category3)
+
+C1$gene = rownames(C1)
+C1 = C1[C1$gene %in% c(genes_category1, genes_category2, genes_category3),]
+C1 = C1[C1$p_val_adj < 0.05,]
+
+
+
+C2$gene = rownames(C2)
+C2 = C2[C2$gene %in% c(genes_category1, genes_category2, genes_category3),]
+C2 = C2[C2$p_val_adj < 0.05,]
+
+C3$gene = rownames(C3)
+C3 = C3[C3$gene %in% c(genes_category1, genes_category2, genes_category3),]
+C3 = C3[C3$p_val_adj < 0.05,]
+
+C4$gene = rownames(C4)
+C4 = C4[C4$gene %in% c(genes_category1, genes_category2, genes_category3),]
+C4 = C4[C4$p_val_adj < 0.05,]
+
+C5$gene = rownames(C5)
+C5 = C5[C5$gene %in% c(genes_category1, genes_category2, genes_category3),]
+C5 = C5[C5$p_val_adj < 0.05,]
+
+
+C6$gene = rownames(C6)
+C6 = C6[C6$gene %in% c(genes_category1, genes_category2, genes_category3),]
+C6 = C6[C6$p_val_adj < 0.05,]
+
+
+
+library(dplyr)
+
+celltypes <- list(
+  Hepatocytes = C1,
+  Kupffer_cells = C5,
+  HSC = C4,
+  Endothelial_cells = C3,
+  Cholangiocytes = C6,
+  Immune_cells = C2
+)
+
+# Extract only gene and avg_log2FC from each
+celltypes <- map2(celltypes, names(celltypes), ~{
+  df <- .x[, c("gene", "avg_log2FC")]
+  colnames(df)[2] <- .y   # rename avg_log2FC to cell type name
+  df
+})
+# Merge all by gene (full join)
+merged_fc <- reduce(celltypes, full_join, by = "gene")
+
+
+
+df_long <- merged_fc %>%
+  pivot_longer(
+    cols = -gene,
+    names_to = "CellType",
+    values_to = "avg_log2FC"
+  )
+
+df_long[df_long$CellType == "Immune_cells",]$CellType = "Immune cells"
+df_long[df_long$CellType == "Endothelial_cells",]$CellType = "Endothelial cells"
+df_long[df_long$CellType == "Kupffer_cells",]$CellType = "Kupffer cells"
+colnames(merged_fc) = c("gene", "Hepatocytes", "Kupffer cells", "HSC", "Endothelial cells", "Cholangiocytes", "Immune cells")
+
+# Optional: keep ordering of genes and cell types
+df_long$gene <- factor(df_long$gene, levels = merged_fc$gene)
+df_long$CellType <- factor(df_long$CellType,
+                           levels = colnames(merged_fc)[-1])  # keep same order as columns
+# Add sign labels (+ / –)
+df_long <- df_long %>%
+  mutate(Sign = ifelse(is.na(avg_log2FC), NA,
+                       ifelse(avg_log2FC > 0, "+",
+                              ifelse(avg_log2FC < 0, "-", "")))) %>%
+  arrange(desc(CellType == "Hepatocytes"), desc(avg_log2FC))
+
+
+
+# Order genes by Hepatocytes logFC (descending)
+
+
+hep_order <- df_long %>%
+  filter(CellType == "Hepatocytes") %>%
+  arrange(desc(avg_log2FC)) %>%
+  pull(gene)
+
+
+# Reorder factor levels for plotting
+df_long$gene <- factor(df_long$gene, levels = hep_order)
+
+# (Optional) reorder CellType to keep same logical order
+df_long$CellType <- factor(df_long$CellType, 
+                           levels = colnames(merged_fc)[-1])
+
+
+pdf("Hem.pdf", height = 20, width = 5)
+ggplot(df_long, aes(x = CellType, y = gene, fill = avg_log2FC)) +
+  geom_tile(color = "grey80") +
+  geom_text(aes(label = Sign), size = 4, color = "black") +
+  scale_fill_gradient2(
+    low = "blue", mid = "white", high = "red",
+    midpoint = 0, na.value = "grey90"
+  ) +
+  theme_minimal(base_size = 10) +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+    axis.text.y = element_text(size = 10),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  ) +
+  labs(
+    fill = "avg_log2FC",
+    title = "avg_log2FC across cell types (sorted by Hepatocytes)"
+  )
+dev.off()
