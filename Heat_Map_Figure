@@ -1,0 +1,102 @@
+# Load required libraries
+library(Seurat)
+library(pheatmap)
+
+# Assume your Seurat object is called 'seurat_obj'
+# and your clustering identities are stored in seurat_obj@meta.data$seurat_clusters
+# (this is the default for Seurat)
+
+# -------------------------------------------------------------
+# Hepatocyte Subclustering and Zonation Analysis
+# -------------------------------------------------------------
+# Required packages
+library(Seurat)
+library(tidyverse)
+library(harmony)
+
+set.seed(2702)
+
+# -------------------------------------------------------------
+# 1. Subset hepatocytes
+# -------------------------------------------------------------
+Hepatocytes.1 <- subset(data, celltype == "Hepatocytes")
+Hepatocytes.1@active.assay = "RNA"
+# -------------------------------------------------------------
+# 2. Data scaling and dimensional reduction
+# -------------------------------------------------------------
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  ScaleData() %>%
+  RunPCA()
+
+# -------------------------------------------------------------
+# 3. Batch correction using Harmony
+# -------------------------------------------------------------
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  RunHarmony("orig.ident")
+
+# -------------------------------------------------------------
+# 4. Clustering and visualization
+# -------------------------------------------------------------
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  FindNeighbors(dims = 1:15, reduction = "harmony") %>%
+  FindClusters(resolution = 0.6) %>%
+  RunTSNE(reduction = "harmony", dims = 1:15)
+
+# -------------------------------------------------------------
+# 5. Define and assign hepatocyte zonation identities
+# -------------------------------------------------------------
+celltype <- tibble(
+  cluster = levels(Hepatocytes.1),
+  zone = c(
+    "Periportal Hep", "Midlobular Hep", "Periportal Hep",
+    "Pericentral Hep", "Pericentral Hep",
+    "No-Zone Hep", "No-Zone Hep", "No-Zone Hep", "Periportal Hep"
+  )
+)
+
+# Rename cluster identities using tidyverse mapping
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  RenameIdents(set_names(celltype$zone, celltype$cluster))
+
+# -------------------------------------------------------------
+# 6. Set active assay for downstream RNA-level analysis
+# -------------------------------------------------------------
+Hepatocytes.1@active.assay <- "RNA"
+
+Hepatocytes.1@meta.data$type = as.character(Hepatocytes.1$type)
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "2_Years_Wt",]$type = "WT_O"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "8_Weeks",]$type = "WT_Y"
+
+# 1. Calculate average expression per cluster
+avg_exp <- AverageExpression(Hepatocytes.1, assays = "RNA", slot = "data", add.ident = "type")$RNA
+
+# avg_exp is a matrix: rows = genes, columns = clusters
+
+hep = FindMarkers(Hepatocytes.1, assay = "RNA", ident.1 = "WT_O", ident.2 = "WT_Y", group.by = "type")
+hep = hep[hep$p_val_adj < 0.05,]
+subl = intersect(c(genes_category1, genes_category2, genes_category3), rownames(hep))
+
+# 3. Subset average expression to those genes
+avg_exp_subset <- avg_exp[subl, ]
+
+
+
+
+mat <- avg_exp_subset
+# Scale by row (same as scale="row" but lets you control it)
+mat_scaled <- t(scale(t(mat)))
+
+# Remove rows with NA/Inf
+mat_scaled <- mat_scaled[complete.cases(mat_scaled), ]
+
+
+pdf("lk.pdf", height = 15,width = 6)
+pheatmap(
+  mat_scaled,
+  cluster_rows = TRUE,
+  cluster_cols = F,
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  color = colorRampPalette(c("blue", "white", "red"))(100)
+)
+dev.off()
