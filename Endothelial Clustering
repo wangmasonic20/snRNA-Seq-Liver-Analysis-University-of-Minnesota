@@ -1,0 +1,144 @@
+# Starting object
+Periportal = Endothelial
+Periportal = subset(Periportal, ident = "Periportal")
+Periportal@active.assay = "RNA"
+
+# Split object by original identity
+Periportal = SplitObject(Periportal, split.by = "orig.ident")
+
+# Use your integration gene list
+genes = integration_genes
+
+# Normalize, find variable features, and restrict to your gene set
+for (i in 1:length(Periportal)) {
+  Periportal[[i]] <- NormalizeData(Periportal[[i]])
+  Periportal[[i]] <- FindVariableFeatures(
+    Periportal[[i]],
+    selection.method = "vst",
+    nfeatures = length(genes)
+  )
+  # Optionally restrict variable features to your genes
+  VariableFeatures(Periportal[[i]]) <- genes
+}
+
+# Find common genes across all subsets
+common_genes <- Reduce(intersect, lapply(Periportal, VariableFeatures))
+
+# Find integration anchors
+anchors <- FindIntegrationAnchors(
+  object.list = Periportal,
+  anchor.features = common_genes,
+  reference = 1
+)
+
+# Integrate data
+Periportal.integrated <- IntegrateData(anchorset = anchors)
+DefaultAssay(Periportal.integrated) <- "integrated"
+
+# Scaling, dimensional reduction, and clustering
+Periportal.integrated <- ScaleData(Periportal.integrated)
+Periportal.integrated <- RunPCA(Periportal.integrated)
+Periportal.integrated <- RunHarmony(Periportal.integrated, "orig.ident")
+Periportal.integrated <- FindNeighbors(Periportal.integrated, dims = 1:15, reduction = "harmony")
+Periportal.integrated <- FindClusters(Periportal.integrated, resolution = 0.6)
+Periportal.integrated <- RunUMAP(Periportal.integrated, reduction = "harmony", dims = 1:15)
+
+# Visualize clusters
+DimPlot(Periportal.integrated, label = TRUE)
+
+# Subset clusters (example: 11, 16, 17)
+Periportal.integrated_sub <- subset(Periportal.integrated, idents = c(11, 16))
+
+# Highlight those cells in the original Endothelial dataset
+DimPlot(
+  Endothelial,
+  cells.highlight = colnames(Periportal.integrated_sub),
+  split.by = "type",
+  reduction = "tsne"
+)
+
+# Annotate senotype information
+Endothelial$celltype = as.character(Endothelial@active.ident)
+Endothelial$senotype = "Non Senescent"
+
+Periportal.1 = subset(Endothelial, celltype == "Periportal")
+
+Periportal.1@meta.data[Periportal.1$type == "2_Years_Wt", ]$senotype = "Old_NonSenotype"
+Periportal.1@meta.data[Periportal.1$type == "8_Weeks", ]$senotype = "Young_NonSenotype"
+Periportal.1@meta.data[Periportal.1$type == "8_Weeks" & Periportal.1$cells %in% colnames(Periportal.integrated_sub), ]$senotype = "Young_Senotype"
+Periportal.1@meta.data[Periportal.1$type == "2_Years_Wt" & Periportal.1$cells %in% colnames(Periportal.integrated_sub), ]$senotype = "Old_Senotype"
+
+table(Periportal.1$senotype)
+
+Periportal.1@active.ident = as.factor(Periportal.1$senotype)
+
+Periportal.1@active.assay
+
+# Differential expression analysis
+Periportal_mk_Old <- run_find_markers_subsample(
+  Periportal.1,
+  target_group = "Old_Senotype",
+  comparison_group = "Old_NonSenotype",
+  n_iterations = 100
+)
+Periportal_mk_Old = combine_results(Periportal_mk_Old)
+write.csv(Periportal_mk_Old, "Periportal_mk_Old_Senotype_vs_Old_Non_Senotype.csv")
+
+Old_genes = Periportal_mk_Old[
+  Periportal_mk_Old$p_val_adj < 0.05 & Periportal_mk_Old$mean_log2FC > 0,
+]$gene
+
+Periportal_mk_Young <- run_find_markers_subsample(
+  Periportal.1,
+  target_group = "Young_Senotype",
+  comparison_group = "Young_NonSenotype",
+  n_iterations = 100
+)
+Periportal_mk_Young = combine_results(Periportal_mk_Young)
+write.csv(Periportal_mk_Young, "Periportal_mk_Young_Senotype_vs_Young_Non_Senotype.csv")
+
+Young_genes = Periportal_mk_Young[
+  Periportal_mk_Young$p_val_adj < 0.05 & Periportal_mk_Young$mean_log2FC > 0,
+]$gene
+
+
+library(scCustomize)
+pdf("Periportal_Clustered_Dot_Plot.pdf", height = 5, width = 6)
+Clustered_DotPlot(Periportal.1, assay = "RNA", group.by = "senotype", features = c(Old_genes,Young_genes), k =2, cluster_ident = F)
+dev.off()
+
+pdf("Periportal_Cells_Senotypes_Endothelial.pdf", height = 4, width = 12)
+DimPlot(
+  Endothelial,
+  cells.highlight = colnames(Periportal.integrated_sub),
+  split.by = "type",
+  reduction = "tsne"
+)
+dev.off()
+
+
+pdf("Pericentral_Cells_Senotypes_Endothelial.pdf", height = 4, width = 12)
+DimPlot(
+  Endothelial,
+  cells.highlight = colnames(Pericentral.integrated_sub),
+  split.by = "type",
+  reduction = "tsne"
+)
+dev.off()
+
+
+pdf("Periportal_Cells_UMAP.pdf", height = 4, width = 10)
+DimPlot(Periportal.integrated,split.by = "type", label = T) + theme(legend.position = "none")
+dev.off()
+
+
+pdf("Pericentral_Cells_UMAP.pdf", height = 4, width = 10)
+DimPlot(Pericentral.integrated,split.by = "type", label = T) + theme(legend.position = "none")
+dev.off()
+
+
+write.csv(table(Periportal.1@active.ident, Periportal.1$type), "Periportal_Cell_Numbers_Senotype.csv")
+write.csv(table(Periportal.integrated@active.ident, Periportal.integrated$type), "Periportal_Cell_Numbers.csv")
+write.csv(table(Pericentral.1@active.ident, Pericentral.1$type), "Pericentral_Cell_Numbers_Senotype.csv")
+write.csv(table(Pericentral.integrated@active.ident, Pericentral.integrated$type), "Pericentral_Cell_Numbers.csv")
+
