@@ -1,1 +1,155 @@
+library(Seurat)
+set.seed(2702)
+library(harmony)
+
+data = readRDS("/projects/standard/lniedern/ali00724/Liver_scNuc_Resequenced/liver_data_10x.rds")
+data = subset(data, celltype == "Hepatocytes")
+
+# -------------------------------------------------------------
+# 1. Subset hepatocytes
+# -------------------------------------------------------------
+Hepatocytes.1 <- data 
+rm(data)
+Hepatocytes.1@active.assay = "integrated"
+# -------------------------------------------------------------
+# 2. Data scaling and dimensional reduction
+# -------------------------------------------------------------
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  ScaleData() %>%
+  RunPCA()
+# -------------------------------------------------------------
+# 3. Batch correction using Harmony
+# -------------------------------------------------------------
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  RunHarmony("orig.ident")
+# -------------------------------------------------------------
+# 4. Clustering and visualization
+# -------------------------------------------------------------
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  FindNeighbors(dims = 1:15, reduction = "harmony") %>%
+  FindClusters(resolution = 0.6) %>%
+  RunTSNE(reduction = "harmony", dims = 1:15)
+# -------------------------------------------------------------
+# 5. Define and assign hepatocyte zonation identities
+# -------------------------------------------------------------
+celltype <- tibble(
+  cluster = levels(Hepatocytes.1),
+  zone = c(
+    "Zone1 Hep", "Zone2 Hep", "Zone1 Hep",
+    "Zone3 Hep", "Zone3 Hep",
+    "No-Zone Hep", "No-Zone Hep", "No-Zone Hep", "Zone1 Hep"
+  )
+)
+# Rename cluster identities using tidyverse mapping
+Hepatocytes.1 <- Hepatocytes.1 %>%
+  RenameIdents(set_names(celltype$zone, celltype$cluster))
+# -------------------------------------------------------------
+# 6. Set active assay for downstream RNA-level analysis
+# -------------------------------------------------------------
+Hepatocytes.1@active.assay <- "RNA"
+
+
+
+Hepatocytes_2_Years = readRDS("/projects/standard/lniedern/ali00724/Hepatocytes_2_Years.rds")
+Senotype_Clusters_2_Years = subset(Hepatocytes_2_Years, idents = c(7,6,9))
+
+
+genes_category1 <- c( "Acvr1b", "Ang", "Angpt1", "Angptl4", "Areg", "Axl", "Bex3", "Bmp2", "Bmp6", "C3",
+                      "Ccl1", "Ccl2", "Ccl20", "Ccl24", "Ccl26", "Ccl3", "Ccl4", "Ccl5", "Ccl7", "Ccl8", "Cd55", "Cd9",
+                      "Csf1", "Csf2", "Csf2rb", "Cst10", "Ctnnb1", "Ctsb", "Cxcl1", "Cxcl10", "Cxcl12", "Cxcl16", "Cxcl2",
+                      "Cxcl3", "Cxcr2", "Dkk1", "Edn1", "Egf", "Egfr", "Ereg", "Esm1", "Ets2", "Fas", "Fgf1", "Fgf2",
+                      "Fgf7", "Gdf15", "Gem", "Gmfg", "Hgf", "Hmgb1", "Icam1", "Icam5", "Igf1", "Igfbp1", "Igfbp2",
+                      "Igfbp3", "Igfbp4", "Igfbp5", "Igfbp6", "Igfbp7", "Il10", "Il13", "Il15", "Il18", "Il1a", "Il1b",
+                      "Il2", "Il6", "Il6st", "Il7", "Inha", "Iqgap2", "Itga2", "Itpka", "Jun", "Kitl", "Lcp1", "Mif",
+                      "Mmp10", "Mmp12", "Mmp13", "Mmp14", "Mmp2", "Mmp3", "Mmp9", "Nap1l4", "Nrg1", "Pappa", "Pecam1",
+                      "Pgf", "Pigf", "Plat", "Plau", "Plaur", "Ptbp1", "Ptger2", "Ptges", "Rps6ka5", "Scamp4", "Selplg",
+                      "Sema3f", "Serpinb3a", "Serpine1", "Serpine2", "Spp1", "Spx", "Timp2", "Tnf", "Tnfrsf11b",
+                      "Tnfrsf1a", "Tnfrsf1b", "Tubgcp2", "Vegfa", "Vegfc", "Vgf", "Wnt16", "Wnt2"  ,"Aldh1a3", "Ang-2", "Angptl8", "Apobec3", "Arhgef3", "Atm", "Btg2", "Ccl11", "Ccl13", "Ccl16",
+                      "Ccl22", "Ccl25", "Ccl9", "Cd82", "Cpe", "Crlf1", "Csf3", "Ctsd", "Ctsz", "Cxcl11", "Cxcl13",
+                      "Cxcl14", "Cxcl15", "Cxcl8", "Ddit4", "Dram1", "Eda2r", "Enc1", "Epha2", "Fdxr", "Fn1", "Gadd45a",
+                      "Gata4", "Gbp2", "Glb1", "Gsn", "Hpse", "Icam3", "Ier5", "Ifi203", "Ifi44", "Ifih1", "Ifit1",
+                      "Ifng", "Irf1", "Irf7", "Isg15", "Lamb1", "Laptm5", "Lgals3", "Lgals3bp", "Mme", "Mmp1",
+                      "Ms4a4a", "Mx2", "Nampt", "Ndn", "Ngf", "Phlda3", "Plk2", "Pmaip1", "Ppm1d", "Prdm1", "Ptgs2",
+                      "Rab31", "Rras", "Rtp4", "Serpinb2", "Serping1", "Sertad1", "Sesn2", "Slc15a3", "Slc25a28",
+                      "Smurf2", "Sparc", "Stat1", "Susd6", "Tgfa", "Tgfb1", "Tgfb2", "Timp1", "Tm7sf3", "Tnfaip2",
+                      "Tnfrsf10b", "Tnfrsf10C", "Tnfrsf23", "Trp53", "Trp53inp1", "Tspan11", "Usp18", "Vcam1",
+                      "Zc3hav1", "Zmat3", "Cd26", "Cd36", "Cd264", "Notch1", "Notch3", "B2m", "Cd148", "Bmp4", "Itgb3"
+)
+genes_category3 <- c("Bcl2l1", "Bcl2l2", "Mcl1", "Bcl2", "Bcl2l", "Bclx", "Bclxl")
+genes_category2 <- c("Cdkn1a", "Cdkn2a", "Cdkn2b", "Cdkn2d", "Cdkn1b", "Cdkn2c", "Cdkn1c","Ccnd2")
+
+
+
+Hepatocytes.young = subset(Hepatocytes.1, type == "8_Weeks")
+Hepatocytes.young@active.assay = "RNA"
+Hepatocytes.young = SplitObject(Hepatocytes.young, split.by = "orig.ident")
+genes = c(genes_category1, genes_category2, genes_category3)
+
+for (i in 1:length(Hepatocytes.young)) {
+  Hepatocytes.young[[i]] <- NormalizeData(Hepatocytes.young[[i]])
+  Hepatocytes.young[[i]] <- FindVariableFeatures(
+    Hepatocytes.young[[i]],
+    selection.method = "vst",
+    nfeatures = length(genes)
+  )
+  
+  # Optionally restrict variable features to your genes
+  VariableFeatures(Hepatocytes.young[[i]]) <- genes
+}
+
+common_genes <- Reduce(intersect, lapply(Hepatocytes.young, VariableFeatures))
+
+anchors <- FindIntegrationAnchors(
+  object.list = Hepatocytes.young,
+  anchor.features = common_genes,
+  reference = 1
+)
+
+Hepatocytes.integrated_young <- IntegrateData(anchorset = anchors)
+
+DefaultAssay(Hepatocytes.integrated_young) <- "integrated"
+
+Hepatocytes.integrated_young <- ScaleData(Hepatocytes.integrated_young)
+Hepatocytes.integrated_young <- RunPCA(Hepatocytes.integrated_young)
+
+Hepatocytes.integrated_young <- RunHarmony(Hepatocytes.integrated_young, "orig.ident")
+
+Hepatocytes.integrated_young <- FindNeighbors(
+  Hepatocytes.integrated_young,
+  dims = 1:15,
+  reduction = "harmony"
+)
+
+Hepatocytes.integrated_young <- FindClusters(Hepatocytes.integrated_young, resolution = 0.6)
+
+Hepatocytes.integrated_young = RunUMAP(
+  Hepatocytes.integrated_young,
+  reduction = "harmony",
+  dims = 1:15
+)
+
+Hepatocytes.integrated_young = RunTSNE(Hepatocytes.integrated_young)
+
+DimPlot(Hepatocytes_2_Years, label = TRUE, raster = FALSE, pt.size = 1) + DimPlot(Hepatocytes.integrated_young, label = TRUE, pt.size = 1)
+
+Senotype_Clusters_8_Weeks = subset(Hepatocytes.integrated_young, idents = c(7,6))
+
+
+# Subset by sample type
+data_2_Years <- Senotype_Clusters_2_Years
+data_8_Weeks <- Senotype_Clusters_8_Weeks
+
+
+
+
+# -----------------------------
+# 4. Assign Senotypes
+# -----------------------------
+Hepatocytes.1$senotype <- "n"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "2_Years_Wt", "senotype"] <- "Old_Non_Senescent"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$type == "8_Weeks", "senotype"] <- "Young_Non_Senescent"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$cells %in% colnames(data_2_Years), "senotype"] <- "Old_Senotype"
+Hepatocytes.1@meta.data[Hepatocytes.1@meta.data$cells %in% colnames(data_8_Weeks), "senotype"] <- "Young_Senotype"
+Hepatocytes.1$celltype <- as.factor(Hepatocytes.1@active.ident)
+Hepatocytes.1$mixcelltype = paste(Hepatocytes.1$celltype,Hepatocytes.1$senotype)
 
