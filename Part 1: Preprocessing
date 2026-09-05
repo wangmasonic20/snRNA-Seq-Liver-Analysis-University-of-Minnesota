@@ -1,118 +1,337 @@
-WT_8wks_sn_1 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_WT_8wks_sn_1_GEX_FL')
-WT_8wks_sn_1 = autoEstCont(WT_8wks_sn_1)
-WT_8wks_sn_1 = adjustCounts(WT_8wks_sn_1)
-WT_8wks_sn_1 = CreateSeuratObject(WT_8wks_sn_1)
-WT_8wks_sn_1[["percent.mt"]] <- PercentageFeatureSet(WT_8wks_sn_1, pattern = "^mt-")
-WT_8wks_sn_1 = subset(WT_8wks_sn_1, nFeature_RNA > 1500 & nFeature_RNA < 3500 & percent.mt < 3 )
-WT_8wks_sn_1 = as.matrix(GetAssayData(WT_8wks_sn_1, layer = "counts"))
-sce <- SingleCellExperiment(list(counts = WT_8wks_sn_1))
-rm(WT_8wks_sn_1)
-sce <- decontX(sce)
-WT_8wks_sn_1 = CreateSeuratObject(decontXcounts(sce))
-WT_8wks_sn_1[["percent.mt"]] <- PercentageFeatureSet(WT_8wks_sn_1, pattern = "^mt-")
-WT_8wks_sn_1 = subset(WT_8wks_sn_1, nFeature_RNA > 1500 & nFeature_RNA < 3500 & percent.mt < 0.5 )
-dim(WT_8wks_sn_1)
+# =========================
+# Week 8 - WT replicate 1
+# =========================
 
+Week8_Wt_1 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_Week8_Wt_1_GEX_FL')
 
-WT_8wks_sn_3 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_WT_8wks_sn_3_GEX_FL')
-WT_8wks_sn_3 = autoEstCont(WT_8wks_sn_3)
-WT_8wks_sn_3 = adjustCounts(WT_8wks_sn_3)
-WT_8wks_sn_3 = CreateSeuratObject(WT_8wks_sn_3)
-WT_8wks_sn_3[["percent.mt"]] <- PercentageFeatureSet(WT_8wks_sn_3, pattern = "^mt-")
-WT_8wks_sn_3 = subset(WT_8wks_sn_3, nFeature_RNA > 1000 & nFeature_RNA < 3500 & percent.mt < 1 )
-WT_8wks_sn_3 = as.matrix(GetAssayData(WT_8wks_sn_3, layer = "counts"))
-sce <- SingleCellExperiment(list(counts = WT_8wks_sn_3))
-rm(WT_8wks_sn_3)
-sce <- decontX(sce)
-WT_8wks_sn_3 = CreateSeuratObject(decontXcounts(sce))
-WT_8wks_sn_3[["percent.mt"]] <- PercentageFeatureSet(WT_8wks_sn_3, pattern = "^mt-")
-WT_8wks_sn_3 = subset(WT_8wks_sn_3, nFeature_RNA > 1800 & nFeature_RNA < 3500 & percent.mt < 0.5 )
-dim(WT_8wks_sn_3)
+Week8_Wt_1 = autoEstCont(Week8_Wt_1)
+Week8_Wt_1 = adjustCounts(Week8_Wt_1)
 
+Week8_Wt_1 = CreateSeuratObject(Week8_Wt_1)
 
-WT_twoyears_sn_1 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_WT_twoyears_sn_1_GEX_FL')
-WT_twoyears_sn_1 = autoEstCont(WT_twoyears_sn_1)
-WT_twoyears_sn_1 = adjustCounts(WT_twoyears_sn_1)
-WT_twoyears_sn_1 = CreateSeuratObject(WT_twoyears_sn_1)
-WT_twoyears_sn_1[["percent.mt"]] <- PercentageFeatureSet(WT_twoyears_sn_1, pattern = "^mt-")
-WT_twoyears_sn_1 = subset(WT_twoyears_sn_1, nFeature_RNA > 1500 & nFeature_RNA < 4000 & percent.mt < 1 )
-WT_twoyears_sn_1 = as.matrix(GetAssayData(WT_twoyears_sn_1, layer = "counts"))
-sce <- SingleCellExperiment(list(counts = WT_twoyears_sn_1))
-rm(WT_twoyears_sn_1)
-sce <- decontX(sce)
-WT_twoyears_sn_1 = CreateSeuratObject(decontXcounts(sce))
-WT_twoyears_sn_1[["percent.mt"]] <- PercentageFeatureSet(WT_twoyears_sn_1, pattern = "^mt-")
-WT_twoyears_sn_1 = subset(WT_twoyears_sn_1, nFeature_RNA > 1500 & nFeature_RNA < 4000 & percent.mt < 1 )
-dim(WT_twoyears_sn_1)
-
-WT_twoyears_sn_2 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_WT_twoyears_sn_2_GEX_FL')
-WT_twoyears_sn_2 = autoEstCont(WT_twoyears_sn_2)
-WT_twoyears_sn_2 = adjustCounts(WT_twoyears_sn_2)
-WT_twoyears_sn_2 = CreateSeuratObject(WT_twoyears_sn_2)
-WT_twoyears_sn_2[["percent.mt"]] <- PercentageFeatureSet(WT_twoyears_sn_2, pattern = "^mt-")
-WT_twoyears_sn_2 = subset(WT_twoyears_sn_2, nFeature_RNA > 1000 & nFeature_RNA < 3000 & percent.mt < 0.5 )
-WT_twoyears_sn_2 = as.matrix(GetAssayData(WT_twoyears_sn_2, layer = "counts"))
-sce <- SingleCellExperiment(list(counts = WT_twoyears_sn_2))
-rm(WT_twoyears_sn_2)
-sce <- decontX(sce)
-WT_twoyears_sn_2 = CreateSeuratObject(decontXcounts(sce))
-WT_twoyears_sn_2[["percent.mt"]] <- PercentageFeatureSet(WT_twoyears_sn_2, pattern = "^mt-")
-WT_twoyears_sn_2 = subset(WT_twoyears_sn_2, nFeature_RNA > 2000 & nFeature_RNA < 3000 & percent.mt < 0.5 )
-dim(WT_twoyears_sn_2)
-
-
-Ercc1_mut_8wks_sn_1 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_Ercc1_mut_8wks_sn_1_GEX_FL')
-Ercc1_mut_8wks_sn_1 = autoEstCont(Ercc1_mut_8wks_sn_1)
-Ercc1_mut_8wks_sn_1 = adjustCounts(Ercc1_mut_8wks_sn_1)
-Ercc1_mut_8wks_sn_1 = CreateSeuratObject(Ercc1_mut_8wks_sn_1)
-Ercc1_mut_8wks_sn_1[["percent.mt"]] <- PercentageFeatureSet(Ercc1_mut_8wks_sn_1, pattern = "^mt-")
-Ercc1_mut_8wks_sn_1 = subset(Ercc1_mut_8wks_sn_1, nFeature_RNA > 1000 & nFeature_RNA < 3500 & percent.mt < 1 )
-Ercc1_mut_8wks_sn_1 = as.matrix(GetAssayData(Ercc1_mut_8wks_sn_1, layer = "counts"))
-sce <- SingleCellExperiment(list(counts = Ercc1_mut_8wks_sn_1))
-rm(Ercc1_mut_8wks_sn_1)
-sce <- decontX(sce)
-Ercc1_mut_8wks_sn_1 = CreateSeuratObject(decontXcounts(sce))
-Ercc1_mut_8wks_sn_1[["percent.mt"]] <- PercentageFeatureSet(Ercc1_mut_8wks_sn_1, pattern = "^mt-")
-dim(Ercc1_mut_8wks_sn_1)
-Ercc1_mut_8wks_sn_1 = subset(Ercc1_mut_8wks_sn_1, nFeature_RNA > 1500 & nFeature_RNA < 3500 & percent.mt < 1)
-
-
-
-
-Ercc1_mut_8wks_sn_3 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_Ercc1_mut_8wks_sn_3_GEX_FL')
-Ercc1_mut_8wks_sn_3 = autoEstCont(Ercc1_mut_8wks_sn_3,forceAccept=TRUE)
-Ercc1_mut_8wks_sn_3 = adjustCounts(Ercc1_mut_8wks_sn_3)
-Ercc1_mut_8wks_sn_3 = CreateSeuratObject(Ercc1_mut_8wks_sn_3)
-Ercc1_mut_8wks_sn_3[["percent.mt"]] <- PercentageFeatureSet(Ercc1_mut_8wks_sn_3, pattern = "^mt-")
-Ercc1_mut_8wks_sn_3 = subset(Ercc1_mut_8wks_sn_3, nFeature_RNA > 1000 & nFeature_RNA < 1200 & percent.mt < 0.5 )
-Ercc1_mut_8wks_sn_3 = as.matrix(GetAssayData(Ercc1_mut_8wks_sn_3, layer = "counts"))
-sce <- SingleCellExperiment(list(counts = Ercc1_mut_8wks_sn_3))
-rm(Ercc1_mut_8wks_sn_3)
-sce <- decontX(sce)
-Ercc1_mut_8wks_sn_3 = CreateSeuratObject(decontXcounts(sce))
-Ercc1_mut_8wks_sn_3[["percent.mt"]] <- PercentageFeatureSet(Ercc1_mut_8wks_sn_3, pattern = "^mt-")
-Ercc1_mut_8wks_sn_3 = subset(Ercc1_mut_8wks_sn_3, nCount_RNA > 1000 )
-
-WT_8wks_sn_1$orig.ident = "WT_8wks_sn_1"
-WT_8wks_sn_3$orig.ident = "WT_8wks_sn_3"
-WT_twoyears_sn_1$orig.ident = "WT_twoyears_sn_1"
-WT_twoyears_sn_2$orig.ident = "WT_twoyears_sn_2"
-Ercc1_mut_8wks_sn_1$orig.ident = "Ercc1_mut_8wks_sn_1"
-Ercc1_mut_8wks_sn_3$orig.ident = "Ercc1_mut_8wks_sn_3"
-
-c.list <- list(
-  "WT_8wks_sn_1" = WT_8wks_sn_1,
-  "WT_8wks_sn_3" = WT_8wks_sn_3,
-  "WT_twoyears_sn_1" = WT_twoyears_sn_1,
-  "WT_twoyears_sn_2" = WT_twoyears_sn_2,
-  "Ercc1_mut_8wks_sn_1" = Ercc1_mut_8wks_sn_1,
-  "Ercc1_mut_8wks_sn_3" = Ercc1_mut_8wks_sn_3
+Week8_Wt_1[["percent.mt"]] <- PercentageFeatureSet(
+  Week8_Wt_1,
+  pattern = "^mt-"
 )
 
-c.list <- lapply(X = c.list, FUN = function(x) {
-  x <- NormalizeData(x)
-  x = FindVariableFeatures(x)
-})
+Week8_Wt_1 = subset(
+  Week8_Wt_1,
+  nFeature_RNA > 1500 &
+  nFeature_RNA < 4000 &
+  percent.mt < 5
+)
+
+Week8_Wt_1 = as.matrix(
+  GetAssayData(Week8_Wt_1, layer = "counts")
+)
+
+sce <- SingleCellExperiment(list(counts = Week8_Wt_1))
+rm(Week8_Wt_1)
+
+sce <- decontX(sce)
+
+Week8_Wt_1 = CreateSeuratObject(decontXcounts(sce))
+
+Week8_Wt_1[["percent.mt"]] <- PercentageFeatureSet(
+  Week8_Wt_1,
+  pattern = "^mt-"
+)
+
+Week8_Wt_1 = subset(
+  Week8_Wt_1,
+  nFeature_RNA > 1500 &
+  nFeature_RNA < 4000 &
+  percent.mt < 5
+)
+
+dim(Week8_Wt_1)
+
+
+# =========================
+# Week 8 - WT replicate 2
+# =========================
+
+Week8_Wt_2 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_Week8_Wt_2_GEX_FL')
+
+Week8_Wt_2 = autoEstCont(Week8_Wt_2)
+Week8_Wt_2 = adjustCounts(Week8_Wt_2)
+
+Week8_Wt_2 = CreateSeuratObject(Week8_Wt_2)
+
+Week8_Wt_2[["percent.mt"]] <- PercentageFeatureSet(
+  Week8_Wt_2,
+  pattern = "^mt-"
+)
+
+Week8_Wt_2 = subset(
+  Week8_Wt_2,
+  nFeature_RNA > 1500 &
+  nFeature_RNA < 4000 &
+  percent.mt < 5
+)
+
+Week8_Wt_2 = as.matrix(
+  GetAssayData(Week8_Wt_2, layer = "counts")
+)
+
+sce <- SingleCellExperiment(list(counts = Week8_Wt_2))
+rm(Week8_Wt_2)
+
+sce <- decontX(sce)
+
+Week8_Wt_2 = CreateSeuratObject(decontXcounts(sce))
+
+Week8_Wt_2[["percent.mt"]] <- PercentageFeatureSet(
+  Week8_Wt_2,
+  pattern = "^mt-"
+)
+
+Week8_Wt_2 = subset(
+  Week8_Wt_2,
+  nFeature_RNA > 1500 &
+  nFeature_RNA < 4000 &
+  percent.mt < 5
+)
+
+dim(Week8_Wt_2)
+
+
+# =========================
+# Week 8 - WT replicate 3
+# =========================
+
+Week8_Wt_3 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_Week8_Wt_3_GEX_FL')
+
+Week8_Wt_3 = autoEstCont(Week8_Wt_3)
+Week8_Wt_3 = adjustCounts(Week8_Wt_3)
+
+Week8_Wt_3 = CreateSeuratObject(Week8_Wt_3)
+
+Week8_Wt_3[["percent.mt"]] <- PercentageFeatureSet(
+  Week8_Wt_3,
+  pattern = "^mt-"
+)
+
+Week8_Wt_3 = subset(
+  Week8_Wt_3,
+  nFeature_RNA > 1500 &
+  nFeature_RNA < 4000 &
+  percent.mt < 5
+)
+
+Week8_Wt_3 = as.matrix(
+  GetAssayData(Week8_Wt_3, layer = "counts")
+)
+
+sce <- SingleCellExperiment(list(counts = Week8_Wt_3))
+rm(Week8_Wt_3)
+
+sce <- decontX(sce)
+
+Week8_Wt_3 = CreateSeuratObject(decontXcounts(sce))
+
+Week8_Wt_3[["percent.mt"]] <- PercentageFeatureSet(
+  Week8_Wt_3,
+  pattern = "^mt-"
+)
+
+Week8_Wt_3 = subset(
+  Week8_Wt_3,
+  nFeature_RNA > 1500 &
+  nFeature_RNA < 4000 &
+  percent.mt < 5
+)
+
+dim(Week8_Wt_3)
+
+
+# =========================
+# 2 Years - WT replicate 1
+# =========================
+
+Years2_WT_1 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_Years2_WT_1_GEX_FL')
+
+Years2_WT_1 = autoEstCont(Years2_WT_1)
+Years2_WT_1 = adjustCounts(Years2_WT_1)
+
+Years2_WT_1 = CreateSeuratObject(Years2_WT_1)
+
+Years2_WT_1[["percent.mt"]] <- PercentageFeatureSet(
+  Years2_WT_1,
+  pattern = "^mt-"
+)
+
+Years2_WT_1 = subset(
+  Years2_WT_1,
+  nFeature_RNA > 2000 &
+  nFeature_RNA < 5000 &
+  percent.mt < 5
+)
+
+Years2_WT_1 = as.matrix(
+  GetAssayData(Years2_WT_1, layer = "counts")
+)
+
+sce <- SingleCellExperiment(list(counts = Years2_WT_1))
+rm(Years2_WT_1)
+
+sce <- decontX(sce)
+
+Years2_WT_1 = CreateSeuratObject(decontXcounts(sce))
+
+Years2_WT_1[["percent.mt"]] <- PercentageFeatureSet(
+  Years2_WT_1,
+  pattern = "^mt-"
+)
+
+Years2_WT_1 = subset(
+  Years2_WT_1,
+  nFeature_RNA > 2000 &
+  nFeature_RNA < 5000 &
+  percent.mt < 5
+)
+
+dim(Years2_WT_1)
+
+
+# =========================
+# 2 Years - WT replicate 2
+# =========================
+
+Years2_WT_2 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_Years2_WT_2_GEX_FL')
+
+Years2_WT_2 = autoEstCont(Years2_WT_2)
+Years2_WT_2 = adjustCounts(Years2_WT_2)
+
+Years2_WT_2 = CreateSeuratObject(Years2_WT_2)
+
+Years2_WT_2[["percent.mt"]] <- PercentageFeatureSet(
+  Years2_WT_2,
+  pattern = "^mt-"
+)
+
+Years2_WT_2 = subset(
+  Years2_WT_2,
+  nFeature_RNA > 1500 &
+  nFeature_RNA < 5000 &
+  percent.mt < 5
+)
+
+Years2_WT_2 = as.matrix(
+  GetAssayData(Years2_WT_2, layer = "counts")
+)
+
+sce <- SingleCellExperiment(list(counts = Years2_WT_2))
+rm(Years2_WT_2)
+
+sce <- decontX(sce)
+
+Years2_WT_2 = CreateSeuratObject(decontXcounts(sce))
+
+Years2_WT_2[["percent.mt"]] <- PercentageFeatureSet(
+  Years2_WT_2,
+  pattern = "^mt-"
+)
+
+Years2_WT_2 = subset(
+  Years2_WT_2,
+  nFeature_RNA > 1500 &
+  nFeature_RNA < 5000 &
+  percent.mt < 5
+)
+
+dim(Years2_WT_2)
+
+
+# =========================
+# 2 Years - WT replicate 3
+# =========================
+
+Years2_WT_3 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_Years2_WT_3_GEX_FL')
+
+Years2_WT_3 = autoEstCont(Years2_WT_3)
+Years2_WT_3 = adjustCounts(Years2_WT_3)
+
+Years2_WT_3 = CreateSeuratObject(Years2_WT_3)
+
+Years2_WT_3[["percent.mt"]] <- PercentageFeatureSet(
+  Years2_WT_3,
+  pattern = "^mt-"
+)
+
+Years2_WT_3 = subset(
+  Years2_WT_3,
+  nFeature_RNA > 1500 &
+  nFeature_RNA < 5000 &
+  percent.mt < 5
+)
+
+Years2_WT_3 = as.matrix(
+  GetAssayData(Years2_WT_3, layer = "counts")
+)
+
+sce <- SingleCellExperiment(list(counts = Years2_WT_3))
+rm(Years2_WT_3)
+
+sce <- decontX(sce)
+
+Years2_WT_3 = CreateSeuratObject(decontXcounts(sce))
+
+Years2_WT_3[["percent.mt"]] <- PercentageFeatureSet(
+  Years2_WT_3,
+  pattern = "^mt-"
+)
+
+Years2_WT_3 = subset(
+  Years2_WT_3,
+  nFeature_RNA > 1500 &
+  nFeature_RNA < 5000 &
+  percent.mt < 5
+)
+
+dim(Years2_WT_3)
+
+
+# =========================
+# Set sample identities
+# =========================
+
+Week8_Wt_1$orig.ident = "Week8_Wt_1"
+Week8_Wt_2$orig.ident = "Week8_Wt_2"
+Week8_Wt_3$orig.ident = "Week8_Wt_3"
+
+Years2_WT_1$orig.ident = "Years2_WT_1"
+Years2_WT_2$orig.ident = "Years2_WT_2"
+Years2_WT_3$orig.ident = "Years2_WT_3"
+
+
+# =========================
+# Create list
+# =========================
+
+c.list <- list(
+  "Week8_Wt_1" = Week8_Wt_1,
+  "Week8_Wt_2" = Week8_Wt_2,
+  "Week8_Wt_3" = Week8_Wt_3,
+  "Years2_WT_1" = Years2_WT_1,
+  "Years2_WT_2" = Years2_WT_2,
+  "Years2_WT_3" = Years2_WT_3
+)
+
+
+# =========================
+# Normalize + variable genes
+# =========================
+
+c.list <- lapply(
+  X = c.list,
+  FUN = function(x) {
+    x <- NormalizeData(x)
+    x <- FindVariableFeatures(x)
+    return(x)
+  }
+)
+
 
 features <- SelectIntegrationFeatures(object.list = c.list)
 immune.anchors <- FindIntegrationAnchors(object.list = c.list, anchor.features = features, reference = 3)
