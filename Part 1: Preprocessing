@@ -1,1 +1,206 @@
+WT_8wks_sn_1 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_WT_8wks_sn_1_GEX_FL')
+WT_8wks_sn_1 = autoEstCont(WT_8wks_sn_1)
+WT_8wks_sn_1 = adjustCounts(WT_8wks_sn_1)
+WT_8wks_sn_1 = CreateSeuratObject(WT_8wks_sn_1)
+WT_8wks_sn_1[["percent.mt"]] <- PercentageFeatureSet(WT_8wks_sn_1, pattern = "^mt-")
+WT_8wks_sn_1 = subset(WT_8wks_sn_1, nFeature_RNA > 1500 & nFeature_RNA < 3500 & percent.mt < 3 )
+WT_8wks_sn_1 = as.matrix(GetAssayData(WT_8wks_sn_1, layer = "counts"))
+sce <- SingleCellExperiment(list(counts = WT_8wks_sn_1))
+rm(WT_8wks_sn_1)
+sce <- decontX(sce)
+WT_8wks_sn_1 = CreateSeuratObject(decontXcounts(sce))
+WT_8wks_sn_1[["percent.mt"]] <- PercentageFeatureSet(WT_8wks_sn_1, pattern = "^mt-")
+WT_8wks_sn_1 = subset(WT_8wks_sn_1, nFeature_RNA > 1500 & nFeature_RNA < 3500 & percent.mt < 0.5 )
+dim(WT_8wks_sn_1)
 
+
+WT_8wks_sn_3 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_WT_8wks_sn_3_GEX_FL')
+WT_8wks_sn_3 = autoEstCont(WT_8wks_sn_3)
+WT_8wks_sn_3 = adjustCounts(WT_8wks_sn_3)
+WT_8wks_sn_3 = CreateSeuratObject(WT_8wks_sn_3)
+WT_8wks_sn_3[["percent.mt"]] <- PercentageFeatureSet(WT_8wks_sn_3, pattern = "^mt-")
+WT_8wks_sn_3 = subset(WT_8wks_sn_3, nFeature_RNA > 1000 & nFeature_RNA < 3500 & percent.mt < 1 )
+WT_8wks_sn_3 = as.matrix(GetAssayData(WT_8wks_sn_3, layer = "counts"))
+sce <- SingleCellExperiment(list(counts = WT_8wks_sn_3))
+rm(WT_8wks_sn_3)
+sce <- decontX(sce)
+WT_8wks_sn_3 = CreateSeuratObject(decontXcounts(sce))
+WT_8wks_sn_3[["percent.mt"]] <- PercentageFeatureSet(WT_8wks_sn_3, pattern = "^mt-")
+WT_8wks_sn_3 = subset(WT_8wks_sn_3, nFeature_RNA > 1800 & nFeature_RNA < 3500 & percent.mt < 0.5 )
+dim(WT_8wks_sn_3)
+
+
+WT_twoyears_sn_1 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_WT_twoyears_sn_1_GEX_FL')
+WT_twoyears_sn_1 = autoEstCont(WT_twoyears_sn_1)
+WT_twoyears_sn_1 = adjustCounts(WT_twoyears_sn_1)
+WT_twoyears_sn_1 = CreateSeuratObject(WT_twoyears_sn_1)
+WT_twoyears_sn_1[["percent.mt"]] <- PercentageFeatureSet(WT_twoyears_sn_1, pattern = "^mt-")
+WT_twoyears_sn_1 = subset(WT_twoyears_sn_1, nFeature_RNA > 1500 & nFeature_RNA < 4000 & percent.mt < 1 )
+WT_twoyears_sn_1 = as.matrix(GetAssayData(WT_twoyears_sn_1, layer = "counts"))
+sce <- SingleCellExperiment(list(counts = WT_twoyears_sn_1))
+rm(WT_twoyears_sn_1)
+sce <- decontX(sce)
+WT_twoyears_sn_1 = CreateSeuratObject(decontXcounts(sce))
+WT_twoyears_sn_1[["percent.mt"]] <- PercentageFeatureSet(WT_twoyears_sn_1, pattern = "^mt-")
+WT_twoyears_sn_1 = subset(WT_twoyears_sn_1, nFeature_RNA > 1500 & nFeature_RNA < 4000 & percent.mt < 1 )
+dim(WT_twoyears_sn_1)
+
+WT_twoyears_sn_2 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_WT_twoyears_sn_2_GEX_FL')
+WT_twoyears_sn_2 = autoEstCont(WT_twoyears_sn_2)
+WT_twoyears_sn_2 = adjustCounts(WT_twoyears_sn_2)
+WT_twoyears_sn_2 = CreateSeuratObject(WT_twoyears_sn_2)
+WT_twoyears_sn_2[["percent.mt"]] <- PercentageFeatureSet(WT_twoyears_sn_2, pattern = "^mt-")
+WT_twoyears_sn_2 = subset(WT_twoyears_sn_2, nFeature_RNA > 1000 & nFeature_RNA < 3000 & percent.mt < 0.5 )
+WT_twoyears_sn_2 = as.matrix(GetAssayData(WT_twoyears_sn_2, layer = "counts"))
+sce <- SingleCellExperiment(list(counts = WT_twoyears_sn_2))
+rm(WT_twoyears_sn_2)
+sce <- decontX(sce)
+WT_twoyears_sn_2 = CreateSeuratObject(decontXcounts(sce))
+WT_twoyears_sn_2[["percent.mt"]] <- PercentageFeatureSet(WT_twoyears_sn_2, pattern = "^mt-")
+WT_twoyears_sn_2 = subset(WT_twoyears_sn_2, nFeature_RNA > 2000 & nFeature_RNA < 3000 & percent.mt < 0.5 )
+dim(WT_twoyears_sn_2)
+
+
+Ercc1_mut_8wks_sn_1 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_Ercc1_mut_8wks_sn_1_GEX_FL')
+Ercc1_mut_8wks_sn_1 = autoEstCont(Ercc1_mut_8wks_sn_1)
+Ercc1_mut_8wks_sn_1 = adjustCounts(Ercc1_mut_8wks_sn_1)
+Ercc1_mut_8wks_sn_1 = CreateSeuratObject(Ercc1_mut_8wks_sn_1)
+Ercc1_mut_8wks_sn_1[["percent.mt"]] <- PercentageFeatureSet(Ercc1_mut_8wks_sn_1, pattern = "^mt-")
+Ercc1_mut_8wks_sn_1 = subset(Ercc1_mut_8wks_sn_1, nFeature_RNA > 1000 & nFeature_RNA < 3500 & percent.mt < 1 )
+Ercc1_mut_8wks_sn_1 = as.matrix(GetAssayData(Ercc1_mut_8wks_sn_1, layer = "counts"))
+sce <- SingleCellExperiment(list(counts = Ercc1_mut_8wks_sn_1))
+rm(Ercc1_mut_8wks_sn_1)
+sce <- decontX(sce)
+Ercc1_mut_8wks_sn_1 = CreateSeuratObject(decontXcounts(sce))
+Ercc1_mut_8wks_sn_1[["percent.mt"]] <- PercentageFeatureSet(Ercc1_mut_8wks_sn_1, pattern = "^mt-")
+dim(Ercc1_mut_8wks_sn_1)
+Ercc1_mut_8wks_sn_1 = subset(Ercc1_mut_8wks_sn_1, nFeature_RNA > 1500 & nFeature_RNA < 3500 & percent.mt < 1)
+
+
+
+
+Ercc1_mut_8wks_sn_3 = load10X('/Users/shahzaib/Analysis/cellranger_Niedernhofer_030_Ercc1_mut_8wks_sn_3_GEX_FL')
+Ercc1_mut_8wks_sn_3 = autoEstCont(Ercc1_mut_8wks_sn_3,forceAccept=TRUE)
+Ercc1_mut_8wks_sn_3 = adjustCounts(Ercc1_mut_8wks_sn_3)
+Ercc1_mut_8wks_sn_3 = CreateSeuratObject(Ercc1_mut_8wks_sn_3)
+Ercc1_mut_8wks_sn_3[["percent.mt"]] <- PercentageFeatureSet(Ercc1_mut_8wks_sn_3, pattern = "^mt-")
+Ercc1_mut_8wks_sn_3 = subset(Ercc1_mut_8wks_sn_3, nFeature_RNA > 1000 & nFeature_RNA < 1200 & percent.mt < 0.5 )
+Ercc1_mut_8wks_sn_3 = as.matrix(GetAssayData(Ercc1_mut_8wks_sn_3, layer = "counts"))
+sce <- SingleCellExperiment(list(counts = Ercc1_mut_8wks_sn_3))
+rm(Ercc1_mut_8wks_sn_3)
+sce <- decontX(sce)
+Ercc1_mut_8wks_sn_3 = CreateSeuratObject(decontXcounts(sce))
+Ercc1_mut_8wks_sn_3[["percent.mt"]] <- PercentageFeatureSet(Ercc1_mut_8wks_sn_3, pattern = "^mt-")
+Ercc1_mut_8wks_sn_3 = subset(Ercc1_mut_8wks_sn_3, nCount_RNA > 1000 )
+
+WT_8wks_sn_1$orig.ident = "WT_8wks_sn_1"
+WT_8wks_sn_3$orig.ident = "WT_8wks_sn_3"
+WT_twoyears_sn_1$orig.ident = "WT_twoyears_sn_1"
+WT_twoyears_sn_2$orig.ident = "WT_twoyears_sn_2"
+Ercc1_mut_8wks_sn_1$orig.ident = "Ercc1_mut_8wks_sn_1"
+Ercc1_mut_8wks_sn_3$orig.ident = "Ercc1_mut_8wks_sn_3"
+
+c.list <- list(
+  "WT_8wks_sn_1" = WT_8wks_sn_1,
+  "WT_8wks_sn_3" = WT_8wks_sn_3,
+  "WT_twoyears_sn_1" = WT_twoyears_sn_1,
+  "WT_twoyears_sn_2" = WT_twoyears_sn_2,
+  "Ercc1_mut_8wks_sn_1" = Ercc1_mut_8wks_sn_1,
+  "Ercc1_mut_8wks_sn_3" = Ercc1_mut_8wks_sn_3
+)
+
+c.list <- lapply(X = c.list, FUN = function(x) {
+  x <- NormalizeData(x)
+  x = FindVariableFeatures(x)
+})
+
+features <- SelectIntegrationFeatures(object.list = c.list)
+immune.anchors <- FindIntegrationAnchors(object.list = c.list, anchor.features = features, reference = 3)
+immune.combined <- IntegrateData(anchorset = immune.anchors)
+
+immune.combined@active.assay = "RNA"
+immune.combined = JoinLayers(immune.combined)
+immune.combined@active.assay  = "integrated"
+immune.combined <- ScaleData(immune.combined, verbose = FALSE)
+immune.combined <- RunPCA(immune.combined, npcs = 30, verbose = FALSE)
+immune.combined <- RunUMAP(immune.combined, reduction = "pca", dims = 1:15)
+immune.combined <- FindNeighbors(immune.combined, reduction = "pca", dims = 1:15)
+immune.combined <- FindClusters(immune.combined, resolution =0.2)
+immune.combined@meta.data$cells = colnames(immune.combined)
+saveRDS(immune.combined, "Liver_Hepatocytes_Single_Nuclei.rds")
+immune.combined@active.assay = "RNA"
+immune.combined = subset(immune.combined, nCount_RNA > 2000)
+table(immune.combined$orig.ident)
+DimPlot(immune.combined, label = T)
+table(immune.combined$integrated_snn_res.0.2,immune.combined$orig.ident)
+
+mk = c("Alb", "Ttr", "Hnf4a", "Krt19", "Sox9", "Epcam", "Cd3d", "Cd3g",
+       "Cd8a", "Cd8b", "Cd4", "Il2ra", "Ctla4", "Foxp3", "Ms4a1", "Cd79b",
+       "Cd19", "Nkp46", "Gzma", "Nk7g", "Csf4r", "S1008a8", "Itgax", "Ccr2", 
+       "Ly6c2", "Xcr1", "Clec9a", "Itgae", "Cd209a", "Clec10a", "Csf1r", "Clec4f", 
+       "Stab1", "Stab2", "Lyve1", "Fcgr2b", "Flt4", "Vwf", "Myh11", "Cnn1", "Mfap4",
+       "Col15a1", "Thy1", "Lrat", "Reln", "Des", "Dcn", "Clec4g","Kdr","Aqp1","Ighm",
+       "Igkc", "Cd79b", "Trac", "Trbc1", "Trbc2", "Lrat", "Reln","Rbp1", "C1qa", "Csf1r")
+DotPlot(immune.combined, assay = "RNA", features = unique(mk)) +RotatedAxis()
+DimPlot(immune.combined,label = T)
+
+pdf("pop.pdf", height = 8, width = 20)
+VlnPlot(immune.combined, assay = "RNA", features = mk, stack = T, flip = T)
+dev.off()
+
+celltype = c("Hepatocytes-1", "Hepatocytes-2", "Hepatocytes-3", "Hepatocytes-4", "Endothelial Cells", "Hepatocytes-5", "Hepatocytes-6",
+             "Hepatic Stellate Cells", "Hepatic Stellate Cells 2", "Kupffer Cells", "Cholangiocytes", "T-Cells")
+names(celltype) <- levels(immune.combined)
+immune.combined <- RenameIdents(immune.combined, celltype)
+DimPlot(immune.combined, reduction = "umap", label = TRUE, pt.size = 0.5, raster = F) + NoLegend()
+
+
+celltype = c("Hepatocytes-1", "Hepatocytes-2", "Hepatocytes-3", "Hepatocytes-4", "Hepatocytes-5", "Hepatocytes-6","Endothelial Cells",
+             "Hepatic Stellate Cells", "Hepatic Stellate Cells 2", "Kupffer Cells", "Cholangiocytes", "T-Cells")
+VlnPlot(immune.combined, assay = "RNA", features = mk, stack = T, flip = T)
+Idents(immune.combined) <- factor(x = Idents(immune.combined), levels = c(celltype))
+mk = c("Alb", "Ttr", "Tat", "Clec4g", "Kdr", "Aqp1", "Reln", "Dcn", "Clec4f", "Csf1r", "C1qa", "Krt19", "Sox9", "Epcam", "Cd4", "Trac", "Cd8a", "Cd8b")
+
+pdf("Dotplot.pdf", height = 4,width = 8)
+DotPlot(immune.combined, assay = "RNA", features = unique(mk), col.min = 0) +RotatedAxis()
+dev.off()
+
+pdf("Umap_1.pdf", height = 6,width = 10)
+DimPlot(immune.combined, reduction = "umap", label = TRUE, pt.size = 0.5, raster = F) + NoLegend()
+dev.off()
+
+immune.combined$type = "l"
+immune.combined@meta.data[immune.combined@meta.data$orig.ident %in% c("WT_8wks_sn_1","WT_8wks_sn_3"),]$type = "WT_8Wks"
+immune.combined@meta.data[immune.combined@meta.data$orig.ident %in% c("WT_twoyears_sn_1","WT_twoyears_sn_2"),]$type = "WT_2Yrs"
+immune.combined@meta.data[immune.combined@meta.data$orig.ident %in% c("Ercc1_mut_8wks_sn_1","Ercc1_mut_8wks_sn_3"),]$type = "Ercc1d_8_Wks"
+
+pdf("Umap_2.pdf", height = 8,width = 25)
+DimPlot(immune.combined, reduction = "umap", label = TRUE, pt.size = 0.5, raster = F)
+dev.off()
+
+write.csv(table(immune.combined@active.ident, immune.combined$orig.ident), "Cell_Numbers_By_Sample.csv")
+
+VlnPlot(immune.combined, features = c("Ptprc","Sidt1", "Adgre1", "Prkcq"), stack = T, flip = T, assay = "RNA")
+
+write.csv(table(immune.combined@active.ident, immune.combined$type), "Cell_Numbers_By_Type.csv")
+
+table(immune.combined$orig.ident)
+
+VlnPlot(immune.combined, features = c("Ptprc","Sidt1", "Adgre1", "Prkcq", "Hamp2", "Glul"), stack = T, flip = T, assay = "RNA")
+
+featureplot(immune.combined, featre)
+
+DotPlot(immune.combined, assay = "RNA", features = c("Ptprc","Sidt1", "Adgre1", "Prkcq", "Hamp2", "Glul"))
+
+Midlobular = c("Hamp", "Hamp2", "Igfbp2", "Ccnd1", "Cyp8b1", "Mup3")
+
+Pericentral= c("Cyp2e1", "Gsta3", "Cyp27a1", "Mup17", "Glul", "Nt5e", 
+               "Axin2", "Cyp1a2", "Oat", "Gstm3")
+
+
+Periportal = c("Alb", "Cyp2f2", "Asl", "Gls2", "Cdh1", "Cps1", "Pck1", "Sdhd")
+
+
+
+DotPlot(immune.combined, assay = "RNA", features = Pericentral, col.min = 0)
+VlnPlot(immune.combined, features = Periportal, stack = T, flip = T, assay = "RNA")
