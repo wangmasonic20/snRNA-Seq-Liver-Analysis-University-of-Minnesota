@@ -1,6 +1,6 @@
 # 🧬 snRNA-Seq Liver Analysis — University of Minnesota
 
-This repository contains an analysis of **single-nucleus RNA sequencing (snRNA-seq)** data from **mouse liver samples** collected at Young and Aged
+This repository contains an analysis of **single-nucleus RNA sequencing (snRNA-seq)** data from collected at Young and Aged mice
 
 ---
 
